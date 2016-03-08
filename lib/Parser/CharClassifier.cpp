@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 #include "ParserPch.h"
-#include "..\Runtime\Base\WindowsGlobalizationAdapter.h"
+#include "../Runtime/Base/WindowsGlobalizationAdapter.h"
 
 using namespace Windows::Data::Text;
 
@@ -619,28 +619,32 @@ void Js::CharClassifier::initClassifier(ScriptContext * scriptContext, CharClass
     if (es6ModeNeeded)
     {
         HRESULT hr = globalizationAdapter->EnsureDataTextObjectsInitialized(globLibrary);
+        // Failed to load windows.globalization.dll or jsintl.dll. No unicodeStatics support
+        // in that case.
         if (FAILED(hr))
         {
-            AssertMsg(false, "Failed to initialize COM interfaces, verify correct version of globalization dll is used.");
-            JavascriptError::MapAndThrowError(scriptContext, hr);
-        }
-
-        this->winGlobCharApi = globalizationAdapter->GetUnicodeStatics();
-        if (this->winGlobCharApi == nullptr)
-        {
-            // No fallback mode, then assert
-            if (es6FallbackMode == CharClassifierModes::ES6)
-            {
-                AssertMsg(false, "Windows::Data::Text::IUnicodeCharactersStatics not initialized");
-                //Fallback to ES5 just in case for fre builds.
-                es6FallbackMode = CharClassifierModes::ES5;
-            }
-            if (isES6UnicodeVerboseEnabled)
-            {
-                Output::Print(L"Windows::Data::Text::IUnicodeCharactersStatics not initialized\r\n");
-            }
-            //Default to non-es6
             es6Supported = false;
+            es6FallbackMode = CharClassifierModes::ES5;
+        }
+        else
+        {
+            this->winGlobCharApi = globalizationAdapter->GetUnicodeStatics();
+            if (this->winGlobCharApi == nullptr)
+            {
+                // No fallback mode, then assert
+                if (es6FallbackMode == CharClassifierModes::ES6)
+                {
+                    AssertMsg(false, "Windows::Data::Text::IUnicodeCharactersStatics not initialized");
+                    //Fallback to ES5 just in case for fre builds.
+                    es6FallbackMode = CharClassifierModes::ES5;
+                }
+                if (isES6UnicodeVerboseEnabled)
+                {
+                    Output::Print(_u("Windows::Data::Text::IUnicodeCharactersStatics not initialized\r\n"));
+                }
+                //Default to non-es6
+                es6Supported = false;
+            }
         }
     }
 #else
@@ -736,7 +740,7 @@ const LPCUTF8 Js::CharClassifier::SkipIdentifierNonSurrogateStartEnd(LPCUTF8 psz
 
 const OLECHAR* Js::CharClassifier::SkipWhiteSpaceSurrogate(LPCOLESTR psz, const CharClassifier *instance)
 {
-    wchar_t currentChar = 0x0;
+    char16 currentChar = 0x0;
 
     // Slow path is to check for a surrogate each iteration.
     // There is no new surrogate whitespaces as of yet, however, might be in the future, so surrogates still need to be checked
@@ -766,7 +770,7 @@ const OLECHAR* Js::CharClassifier::SkipWhiteSpaceSurrogate(LPCOLESTR psz, const 
 
 const OLECHAR* Js::CharClassifier::SkipWhiteSpaceSurrogateStartEnd(_In_reads_(pStrEnd - pStr) LPCOLESTR pStr, _In_ LPCOLESTR pStrEnd, const CharClassifier *instance)
 {
-    wchar_t currentChar = 0x0;
+    char16 currentChar = 0x0;
 
     // Same reasoning as above
     while(pStr < pStrEnd && (currentChar = *pStr) != '\0')
@@ -795,7 +799,7 @@ const OLECHAR* Js::CharClassifier::SkipWhiteSpaceSurrogateStartEnd(_In_reads_(pS
 const OLECHAR* Js::CharClassifier::SkipIdentifierSurrogate(LPCOLESTR psz, const CharClassifier *instance)
 {
     // Similar reasoning to above, however we do have surrogate identifiers, but less likely to occur in code.
-    wchar_t currentChar = *psz;
+    char16 currentChar = *psz;
 
     if (!instance->IsIdStart(currentChar))
     {

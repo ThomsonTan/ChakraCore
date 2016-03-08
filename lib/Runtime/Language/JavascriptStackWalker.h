@@ -5,17 +5,17 @@
 #pragma once
 
 #if defined(_M_IX86)
-#include "Language\i386\stackframe.h"
+#include "Language/i386/StackFrame.h"
 typedef Js::X86StackFrame StackFrame;
 #elif defined(_M_X64)
-#include "Language\amd64\stackframe.h"
-#include "Language\amd64\stackframe.inl"
+#include "Language/amd64/StackFrame.h"
+#include "Language/amd64/StackFrame.inl"
 typedef Js::Amd64StackFrame StackFrame;
 #elif defined(_M_ARM)
-#include "Language\arm\stackframe.h"
+#include "Language/arm/StackFrame.h"
 typedef Js::ArmStackFrame StackFrame;
 #elif defined(_M_ARM64)
-#include "Language\arm64\stackframe.h"
+#include "Language/arm64/StackFrame.h"
 typedef Js::Arm64StackFrame StackFrame;
 #else
 #error JavascriptStackWalker is not supported on this architecture.
@@ -224,9 +224,11 @@ namespace Js
 
         static bool TryIsTopJavaScriptFrameNative(ScriptContext* scriptContext, bool* istopFrameNative, bool ignoreLibraryCode = false);
 
+#if ENABLE_NATIVE_CODEGEN
         void ClearCachedInternalFrameInfo();
         void SetCachedInternalFrameInfo(InternalFrameType frameType, InternalFrameType loopBodyFrameType);
         InternalFrameInfo GetCachedInternalFrameInfo() const { return this->lastInternalFrameInfo; }
+#endif
         bool IsCurrentPhysicalFrameForLoopBody() const;
 
         // noinline, we want to use own stack frame.
@@ -253,7 +255,7 @@ namespace Js
             {
                 if (IsDisplayCaller(jsFunction))
                 {
-                    bool needToPass = (!onlyOnDebugMode || jsFunction->GetScriptContext()->IsInDebugMode())
+                    bool needToPass = (!onlyOnDebugMode || jsFunction->GetScriptContext()->IsScriptContextInDebugMode())
                         && (!filterDiagnosticsOM || !jsFunction->GetScriptContext()->IsDiagnosticsScriptContext());
 
                     if (needToPass)
@@ -326,9 +328,9 @@ namespace Js
         void SetCurrentArgumentsObject(Var args);
         Var GetCurrentNativeArgumentsObject() const;
         void SetCurrentNativeArgumentsObject(Var args);
-
+#if ENABLE_NATIVE_CODEGEN
         InternalFrameInfo lastInternalFrameInfo;
-
+#endif
         mutable StackFrame currentFrame;
 
         Js::JavascriptFunction * UpdateFrame(bool includeInlineFrames);

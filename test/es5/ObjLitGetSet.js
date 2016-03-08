@@ -116,7 +116,7 @@ function Test4()
   }
   catch(ex)
   {
-    if(!Verify("get propery accessor in object literal must not accept any args", true, ex instanceof SyntaxError)) return false;
+    if(!Verify("get property accessor in object literal must not accept any args", true, ex instanceof SyntaxError)) return false;
   }
 
   try
@@ -126,7 +126,7 @@ function Test4()
   }
   catch(ex)
   {
-    if(!Verify("set propery accessor in object literal must accept only one args", true, ex instanceof SyntaxError)) return false;
+    if(!Verify("set property accessor in object literal must accept only one args", true, ex instanceof SyntaxError)) return false;
   }
 
   try
@@ -173,6 +173,8 @@ function Test5()
 
     WScript.Echo("" + fooDescriptor.get);
     WScript.Echo("" + fooDescriptor.set);
+
+    return true;
 }
 
 // Note: test for Object literal duplicate set\get property is in the file ObjLitGetSetDuplicate.js.
